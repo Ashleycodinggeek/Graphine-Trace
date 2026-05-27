@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chat</title>
+
+<style>
+body{
+    font-family: 'Segoe UI', sans-serif;
+    background: #f4f6f9;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Main Chat Card */
+.container{
+    width: 600px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Heading */
+h2{
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+/* Select dropdown */
+select{
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+/* Chat Box */
+.chat-box{
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 15px;
+    height: 250px;
+    overflow-y: auto;
+    background: #f9fbff;
+    margin-bottom: 15px;
+}
+
+/* Messages */
+.message{
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    max-width: 75%;
+    font-size: 14px;
+}
+
+/* Patient Message */
+.patient{
+    background: #e9f1ff;
+    align-self: flex-start;
+}
+
+/* Clinician Message */
+.clinician{
+    background: #4e73df;
+    color: white;
+    align-self: flex-end;
+}
+
+/* Input Section */
+.input-area{
+    display: flex;
+    gap: 10px;
+}
+
+input{
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.send-btn{
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #1cc88a, #17a673);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.send-btn:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Back Button */
+.back-btn{
+    margin-top: 15px;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #858796;
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.back-btn:hover{
+    background: #6c757d;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Chat with Patient</h2>
+
+<select id="patientSelect" onchange="loadChat()">
+    <option value="">Select Patient</option>
+    <!-- Patients will be loaded dynamically -->
+</select>
+
+<div class="chat-box" id="chatBox">
+    <div class="message clinician">
+        Select a patient to start chatting
+    </div>
+</div>
+
+<div class="input-area">
+    <input type="text" id="messageInput" placeholder="Type message..." onkeypress="handleKeyPress(event)">
+    <button class="send-btn" onclick="sendMessage()">Send</button>
+</div>
+
+<button class="back-btn" onclick="window.location.href='dashboard.html'">
+    Back to Dashboard
+</button>
+
+</div>
+
+<script>
+let patients = [];
+let currentPatientId = null;
+
+window.onload = function() {
+    loadPatients();
+    
+    // Check if patient is specified in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const patientId = urlParams.get('patient');
+    if (patientId) {
+        // Wait for patients to load, then select
+        setTimeout(() => {
+            document.getElementById('patientSelect').value = patientId;
+            loadChat();
+        }, 500);
+    }
+};
+
+function loadPatients() {
+    fetch('/patients')
+    .then(res => res.json())
+    .then(data => {
+        patients = data;
+        const select = document.getElementById('patientSelect');
+        
+        data.forEach(patient => {
+            const option = document.createElement('option');
+            option.value = patient.id;
+            option.textContent = patient.name;
+            select.appendChild(option);
+        });
+    })
+    .catch(err => console.error('Error loading patients:', err));
+}
+
+function loadChat() {
+    currentPatientId = document.getElementById('patientSelect').value;
+    
+    if (!currentPatientId) {
+        document.getElementById('chatBox').innerHTML = '<div class="message clinician">Select a patient to start chatting</div>';
+        return;
+    }
+    
+    fetch(`/chat/${currentPatientId}`)
+    .then(res => res.json())
+    .then(messages => {
+        displayMessages(messages);
+    })
+    .catch(err => console.error('Error loading chat:', err));
+}
+
+function displayMessages(messages) {
+    const chatBox = document.getElementById('chatBox');
+    
+    if (messages.length === 0) {
+        chatBox.innerHTML = '<div class="message clinician">No messages yet. Start the conversation!</div>';
+        return;
+    }
+    
+    chatBox.innerHTML = messages.map(msg => `
+        <div class="message ${msg.sender}">
+            <strong>${msg.sender === 'clinician' ? 'You' : patients.find(p => p.id == msg.patient_id)?.name || 'Patient'}:</strong> ${msg.message}
+            <br><small>${new Date(msg.timestamp).toLocaleString()}</small>
+        </div>
+    `).join('');
+    
+    // Scroll to bottom
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function sendMessage() {
+    const messageInput = document.getElementById('messageInput');
+    const message = messageInput.value.trim();
+    
+    if (!message || !currentPatientId) return;
+    
+    const messageData = {
+        patient_id: currentPatientId,
+        sender: 'clinician',
+        message: message
+    };
+    
+    fetch('/chat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(messageData)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            messageInput.value = '';
+            loadChat(); // Reload chat to show new message
+        }
+    })
+    .catch(err => {
+        console.error('Error sending message:', err);
+        alert('Error sending message');
+    });
+}
+
+function handleKeyPress(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+}
+</script>
+
+</body>
+</html>

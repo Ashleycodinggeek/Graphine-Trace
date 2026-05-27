@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Dashboard - Healthcare Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; }
+        .header { background: #28a745; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 24px; }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .container { display: flex; min-height: calc(100vh - 70px); }
+        .sidebar { width: 250px; background: #343a40; color: white; padding: 20px; }
+        .sidebar h3 { margin-bottom: 20px; color: #ffc107; }
+        .sidebar ul { list-style: none; }
+        .sidebar li { margin-bottom: 10px; }
+        .sidebar a { color: white; text-decoration: none; display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 5px; transition: 0.3s; }
+        .sidebar a:hover, .sidebar a.active { background: #495057; }
+        .main-content { flex: 1; padding: 25px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 15px; }
+        .stat-icon { font-size: 40px; color: #28a745; }
+        .stat-info h3 { font-size: 28px; margin-bottom: 5px; }
+        .stat-info p { color: #6c757d; }
+        .section { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .section h2 { margin-bottom: 20px; color: #343a40; border-bottom: 2px solid #28a745; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #dee2e6; }
+        th { background: #f8f9fa; font-weight: 600; }
+        .btn { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; transition: 0.3s; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #1e7e34; }
+        .vitals-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .vital-card { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; }
+        .vital-card h4 { margin-bottom: 10px; color: #28a745; }
+        .vital-card p { font-size: 24px; font-weight: bold; margin: 0; }
+        .chat-container { display: flex; flex-direction: column; height: 400px; }
+        .chat-messages { flex: 1; border: 1px solid #dee2e6; border-radius: 5px; padding: 10px; overflow-y: auto; background: #f8f9fa; margin-bottom: 10px; }
+        .message { margin-bottom: 10px; padding: 8px 12px; border-radius: 15px; max-width: 70%; }
+        .message.patient { background: #007bff; color: white; align-self: flex-end; margin-left: auto; }
+        .message.clinician { background: #e9ecef; color: #333; }
+        .chat-input { display: flex; gap: 10px; }
+        .chat-input input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 5px; }
+        .status-badge { padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .status-scheduled { background: #ffc107; color: #212529; }
+        .status-completed { background: #28a745; color: white; }
+        .status-cancelled { background: #dc3545; color: white; }
+        .heatmap-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; margin-bottom: 15px; }
+        .heatmap-cell { width: 100%; padding-top: 100%; border-radius: 6px; position: relative; }
+        .heatmap-cell span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: #fff; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fas fa-user"></i> My Health Dashboard</h1>
+        <div class="user-info">
+            <span id="userName">Loading...</span>
+            <form method="POST" action="/logout" style="display: inline;">
+                <button type="submit" style="background: none; border: none; color: white; cursor: pointer;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <h3><i class="fas fa-tachometer-alt"></i> Dashboard</h3>
+            <ul>
+                <li><a href="#overview" class="active" onclick="showSection('overview')"><i class="fas fa-home"></i> Overview</a></li>
+                <li><a href="#profile" onclick="showSection('profile')"><i class="fas fa-user"></i> My Profile</a></li>
+                <li><a href="#appointments" onclick="showSection('appointments')"><i class="fas fa-calendar"></i> Appointments</a></li>
+                <li><a href="#notes" onclick="showSection('notes')"><i class="fas fa-notes-medical"></i> Medical Notes</a></li>
+                <li><a href="#vitals" onclick="showSection('vitals')"><i class="fas fa-heartbeat"></i> Vital Signs</a></li>
+                <li><a href="#chat" onclick="showSection('chat')"><i class="fas fa-comments"></i> Chat with Doctor</a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <!-- Overview Section -->
+            <div id="overview-section" class="section">
+                <h2><i class="fas fa-chart-line"></i> Health Overview</h2>
+                <div class="stats">
+                    <div class="stat-card">
+                        <i class="fas fa-calendar-check stat-icon"></i>
+                        <div class="stat-info">
+                            <h3 id="upcomingAppointments">-</h3>
+                            <p>Upcoming Appointments</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-notes-medical stat-icon"></i>
+                        <div class="stat-info">
+                            <h3 id="totalNotes">-</h3>
+                            <p>Medical Notes</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-heartbeat stat-icon"></i>
+                        <div class="stat-info">
+                            <h3 id="latestBp">-</h3>
+                            <p>Latest Blood Pressure</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-weight stat-icon"></i>
+                        <div class="stat-info">
+                            <h3 id="latestWeight">-</h3>
+                            <p>Latest Weight (kg)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="vitals-grid" id="latestVitals">
+                    <!-- Latest vitals will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Profile Section -->
+            <div id="profile-section" class="section" style="display: none;">
+                <h2><i class="fas fa-user"></i> My Profile</h2>
+                <div id="profileInfo">
+                    <p>Loading profile information...</p>
+                </div>
+            </div>
+
+            <!-- Appointments Section -->
+            <div id="appointments-section" class="section" style="display: none;">
+                <h2><i class="fas fa-calendar"></i> My Appointments</h2>
+                <table id="appointmentsTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Clinician</th>
+                            <th>Reason</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="appointmentsTableBody">
+                        <tr><td colspan="5">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Medical Notes Section -->
+            <div id="notes-section" class="section" style="display: none;">
+                <h2><i class="fas fa-notes-medical"></i> My Medical Notes</h2>
+                <div id="notesList">
+                    <p>Loading medical notes...</p>
+                </div>
+            </div>
+
+            <!-- Vital Signs Section -->
+            <div id="vitals-section" class="section" style="display: none;">
+                <h2><i class="fas fa-heartbeat"></i> My Vital Signs History</h2>
+                <table id="vitalsTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Blood Pressure</th>
+                            <th>Heart Rate</th>
+                            <th>Temperature</th>
+                            <th>Weight</th>
+                            <th>Height</th>
+                            <th>Recorded By</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vitalsTableBody">
+                        <tr><td colspan="7">Loading...</td></tr>
+                    </tbody>
+                </table>
+                <div style="margin-top: 25px;">
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center; margin-bottom: 15px;">
+                        <label for="vitalsPeriodSelect"><strong>Show data for:</strong></label>
+                        <select id="vitalsPeriodSelect" onchange="loadVitalsHistory()" style="padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                            <option value="1h">Last Hour</option>
+                            <option value="6h">Last 6 Hours</option>
+                            <option value="24h" selected>Last 24 Hours</option>
+                            <option value="7d">Last 7 Days</option>
+                        </select>
+                    </div>
+                    <canvas id="vitalsChart" height="250" style="background: white; border: 1px solid #dee2e6; border-radius: 10px; padding: 15px;"></canvas>
+                </div>
+                <div style="margin-top: 25px;">
+                    <h3>Pressure Map Feedback</h3>
+                    <div class="heatmap-grid" id="heatmapPreview"></div>
+                    <div style="display: grid; gap: 15px; margin-top: 15px;">
+                        <select id="mapTimestampSelect" style="padding: 10px; border-radius: 5px; border: 1px solid #ccc;"></select>
+                        <input id="pressureRegion" type="text" placeholder="Region label (e.g. left heel, right hip)" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                        <textarea id="pressureComment" rows="3" placeholder="Describe what you feel or flag areas of concern..." style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;"></textarea>
+                        <button class="btn btn-success" onclick="submitPressureFeedback()">Submit Feedback</button>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <h4>Feedback history</h4>
+                        <div id="pressureFeedbackList"><p>Loading feedback...</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Section -->
+            <div id="chat-section" class="section" style="display: none;">
+                <h2><i class="fas fa-comments"></i> Chat with Your Doctor</h2>
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <p>Loading messages...</p>
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" id="chatMessage" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+                        <button class="btn btn-success" onclick="sendMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let patientProfile = null;
+
+        // Load data on page load
+        window.onload = function() {
+            loadUserInfo();
+            loadProfile();
+            loadOverview();
+            loadAppointments();
+            loadNotes();
+            loadVitals();
+            loadVitalsHistory();
+            loadPressureFeedback();
+            loadChat();
+        };
+
+        function loadUserInfo() {
+            fetch('/api/user', { credentials: 'same-origin' })
+            .then(res => {
+              if (res.status === 401) {
+                window.location.href = '/';
+                return null;
+              }
+              return res.json();
+            })
+            .then(user => {
+              if (user) {
+                currentUser = user;
+                // Check role and redirect if not patient
+                if (user.role !== 'patient') {
+                  switch(user.role) {
+                    case 'admin':
+                      window.location.href = '/admin-dashboard.html';
+                      break;
+                    case 'clinician':
+                      window.location.href = '/clinician-dashboard.html';
+                      break;
+                    default:
+                      window.location.href = '/';
+                  }
+                  return;
+                }
+                document.getElementById('userName').textContent = user.fullName;
+              }
+            })
+            .catch(err => {
+              console.error('Error loading user info:', err);
+              window.location.href = '/';
+            });
+        }
+
+        function loadProfile() {
+            fetch('/api/patient/profile', { credentials: 'same-origin' })
+            .then(res => {
+                if (res.status === 401) {
+                    window.location.href = '/';
+                    throw new Error('Unauthorized');
+                }
+                if (!res.ok) {
+                    throw new Error('Failed to load profile');
+                }
+                return res.json();
+            })
+            .then(profile => {
+                patientProfile = profile;
+                displayProfile(profile);
+            })
+            .catch(err => {
+                console.error('Error loading profile:', err);
+                if (err.message !== 'Unauthorized') {
+                    const profileDiv = document.getElementById('profileInfo');
+                    profileDiv.innerHTML = '<p>Error loading profile</p>';
+                }
+            });
+        }
+
+        function displayProfile(profile) {
+            const profileDiv = document.getElementById('profileInfo');
+            profileDiv.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <div>
+                        <h3>Personal Information</h3>
+                        <p><strong>Name:</strong> ${profile.name}</p>
+                        <p><strong>Date of Birth:</strong> ${profile.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString() : 'Not provided'}</p>
+                        <p><strong>Gender:</strong> ${profile.gender || 'Not provided'}</p>
+                        <p><strong>Phone:</strong> ${profile.phone || 'Not provided'}</p>
+                        <p><strong>Address:</strong> ${profile.address || 'Not provided'}</p>
+                    </div>
+                    <div>
+                        <h3>Medical Information</h3>
+                        <p><strong>Blood Type:</strong> ${profile.blood_type || 'Not provided'}</p>
+                        <p><strong>Allergies:</strong> ${profile.allergies || 'None reported'}</p>
+                        <p><strong>Medical History:</strong> ${profile.medical_history || 'Not provided'}</p>
+                        <p><strong>Emergency Contact:</strong> ${profile.emergency_contact || 'Not provided'}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadOverview() {
+            // Load appointments count
+            fetch('/api/patient/appointments', { credentials: 'same-origin' })
+            .then(res => {
+                if (res.status === 401) {
+                    window.location.href = '/';
+                    throw new Error('Unauthorized');
+                }
+                if (!res.ok) {
+                    throw new Error('Failed to load appointments');
+                }
+                return res.json();
+            })
+            .then(appointments => {
+                const upcoming = appointments.filter(apt => new Date(apt.appointment_date) >= new Date()).length;
+                document.getElementById('upcomingAppointments').textContent = upcoming;
+            })
+            .catch(err => console.error('Error loading appointments:', err));
+
+            // Load notes count
+            fetch('/api/patient/notes', { credentials: 'same-origin' })
+            .then(res => res.json())
+            .then(notes => {
+                document.getElementById('totalNotes').textContent = notes.length;
+            })
+            .catch(err => console.error('Error loading notes:', err));
+
+            // Load latest vitals
+            fetch('/api/patient/vitals?limit=1', { credentials: 'same-origin' })
+            .then(res => res.json())
+            .then(vitals => {
+                if (vitals.length > 0) {
+                    const latest = vitals[0];
+                    document.getElementById('latestBp').textContent = latest.blood_pressure || 'N/A';
+                    document.getElementById('latestWeight').textContent = latest.weight || 'N/A';
+
+                    // Display latest vitals
+                    const vitalsDiv = document.getElementById('latestVitals');
+                    vitalsDiv.innerHTML = `
+                        <div class="vital-card">
+                            <h4>Blood Pressure</h4>
+                            <p>${latest.blood_pressure || 'N/A'}</p>
+                        </div>
+                        <div class="vital-card">
+                            <h4>Heart Rate</h4>
+                            <p>${latest.heart_rate || 'N/A'}</p>
+                        </div>
+                        <div class="vital-card">
+                            <h4>Temperature</h4>
+                            <p>${latest.temperature || 'N/A'}</p>
+                        </div>
+                        <div class="vital-card">
+                            <h4>Weight</h4>
+                            <p>${latest.weight || 'N/A'} kg</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(err => console.error('Error loading vitals:', err));
+        }
+
+        function loadAppointments() {
+            fetch('/api/patient/appointments', { credentials: 'same-origin' })
+            .then(res => {
+                if (res.status === 401) {
+                    window.location.href = '/';
+                    throw new Error('Unauthorized');
+                }
+                if (!res.ok) {
+                    throw new Error('Failed to load appointments');
+                }
+                return res.json();
+            })
+            .then(appointments => {
+                const tbody = document.getElementById('appointmentsTableBody');
+                if (appointments.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5">No appointments found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = appointments.map(apt => `
+                    <tr>
+                        <td>${new Date(apt.appointment_date).toLocaleDateString()}</td>
+                        <td>${apt.appointment_time}</td>
+                        <td>${apt.clinician_name || 'Not assigned'}</td>
+                        <td>${apt.reason || 'Not specified'}</td>
+                        <td><span class="status-badge status-${apt.status}">${apt.status}</span></td>
+                    </tr>
+                `).join('');
+            })
+            .catch(err => {
+                console.error('Error loading appointments:', err);
+                if (err.message !== 'Unauthorized') {
+                    const tbody = document.getElementById('appointmentsTableBody');
+                    tbody.innerHTML = '<tr><td colspan="5">Error loading appointments</td></tr>';
+                }
+            });
+        }
+
+        function loadNotes() {
+            fetch('/api/patient/notes', { credentials: 'same-origin' })
+            .then(res => {
+                if (res.status === 401) {
+                    window.location.href = '/';
+                    throw new Error('Unauthorized');
+                }
+                if (!res.ok) {
+                    throw new Error('Failed to load notes');
+                }
+                return res.json();
+            })
+            .then(notes => {
+                const notesDiv = document.getElementById('notesList');
+                if (notes.length === 0) {
+                    notesDiv.innerHTML = '<p>No medical notes found</p>';
+                    return;
+                }
+
+                notesDiv.innerHTML = notes.map(note => `
+                    <div style="border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <strong>${note.clinician_name}</strong>
+                            <small>${new Date(note.created_at).toLocaleString()}</small>
+                        </div>
+                        <p><strong>Diagnosis:</strong> ${note.diagnosis || 'Not specified'}</p>
+                        <p><strong>Prescription:</strong> ${note.prescription || 'Not specified'}</p>
+                        <p><strong>Treatment Plan:</strong> ${note.treatment_plan || 'Not specified'}</p>
+                        <p><strong>Comments:</strong> ${note.comments || 'No comments'}</p>
+                    </div>
+                `).join('');
+            })
+            .catch(err => {
+                console.error('Error loading notes:', err);
+                if (err.message !== 'Unauthorized') {
+                    const notesDiv = document.getElementById('notesList');
+                    notesDiv.innerHTML = '<p>Error loading medical notes</p>';
+                }
+            });
+        }
+
+        function loadVitals() {
+            fetch('/api/patient/vitals', { credentials: 'same-origin' })
+            .then(res => {
+                if (res.status === 401) {
+                    window.location.href = '/login.html';
+                    throw new Error('Unauthorized');
+                }
+                if (!res.ok) {
+                    throw new Error('Failed to load vitals');
+                }
+                return res.json();
+            })
+            .then(vitals => {
+                const tbody = document.getElementById('vitalsTableBody');
+                if (vitals.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7">No vital signs recorded</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = vitals.map(vital => `
+                    <tr>
+                        <td>${new Date(vital.recorded_at).toLocaleDateString()}</td>
+                        <td>${vital.blood_pressure || 'N/A'}</td>
+                        <td>${vital.heart_rate || 'N/A'}</td>
+                        <td>${vital.temperature || 'N/A'}</td>
+                        <td>${vital.weight || 'N/A'}</td>
+                        <td>${vital.height || 'N/A'}</td>
+                        <td>${vital.recorded_by_name || 'System'}</td>
+                    </tr>
+                `).join('');
+            })
+            .catch(err => {
+                console.error('Error loading vitals:', err);
+                if (err.message !== 'Unauthorized') {
+                    const tbody = document.getElementById('vitalsTableBody');
+                    tbody.innerHTML = '<tr><td colspan="7">Error loading vital signs</td></tr>';
+                }
+            });
+        }
+
+        async function loadVitalsHistory() {
+            const period = document.getElementById('vitalsPeriodSelect').value || '24h';
+            try {
+                const res = await fetch(`/api/patient/vitals-history?period=${period}`, { credentials: 'same-origin' });
+                if (res.status === 401) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                const vitals = await res.json();
+                renderVitalsChart(vitals);
+                populateMapTimestamps(vitals);
+                generatePressureMapPreview(vitals[vitals.length - 1]);
+            } catch (err) {
+                console.error('Error loading vitals history:', err);
+                const chartContainer = document.getElementById('vitalsChart');
+                if (chartContainer) {
+                    chartContainer.getContext('2d').clearRect(0, 0, chartContainer.width, chartContainer.height);
+                }
+            }
+        }
+
+        let vitalsChartInstance = null;
+
+        function renderVitalsChart(vitals) {
+            const ctx = document.getElementById('vitalsChart').getContext('2d');
+            const labels = vitals.map(v => new Date(v.recorded_at).toLocaleString());
+            const heartRateData = vitals.map(v => Number(v.heart_rate) || null);
+            const temperatureData = vitals.map(v => Number(v.temperature) || null);
+
+            if (vitalsChartInstance) {
+                vitalsChartInstance.destroy();
+            }
+
+            vitalsChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Heart Rate (bpm)',
+                            data: heartRateData,
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                            tension: 0.3,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: 'Temperature (°C)',
+                            data: temperatureData,
+                            borderColor: '#007bff',
+                            backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                            tension: 0.3,
+                            yAxisID: 'y2'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            display: true,
+                            title: { display: true, text: 'Time' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'left',
+                            title: { display: true, text: 'Heart Rate' }
+                        },
+                        y2: {
+                            type: 'linear',
+                            position: 'right',
+                            title: { display: true, text: 'Temperature' },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function populateMapTimestamps(vitals) {
+            const select = document.getElementById('mapTimestampSelect');
+            select.innerHTML = '';
+            select.innerHTML = `<option value="">Use latest reading</option>` + vitals.map(v => `
+                <option value="${v.recorded_at}">${new Date(v.recorded_at).toLocaleString()}</option>
+            `).join('');
+        }
+
+        function generatePressureMapPreview(latest) {
+            const preview = document.getElementById('heatmapPreview');
+            preview.innerHTML = '';
+            if (!latest) {
+                preview.innerHTML = '<p style="color: #6c757d;">No heatmap preview available.</p>';
+                return;
+            }
+
+            const baseValue = Number(latest.heart_rate) || 70;
+            const tempValue = Number(latest.temperature) || 36.6;
+            const values = Array.from({ length: 36 }, (_, i) => Math.min(100, Math.max(10, baseValue + tempValue * 2 - i * 1.2)));
+
+            values.forEach(value => {
+                const cell = document.createElement('div');
+                const intensity = value / 100;
+                cell.className = 'heatmap-cell';
+                cell.style.background = `rgba(220, 53, 69, ${Math.max(0.2, intensity)})`;
+                cell.innerHTML = `<span>${Math.round(value)}</span>`;
+                preview.appendChild(cell);
+            });
+        }
+
+        async function loadPressureFeedback() {
+            try {
+                const res = await fetch('/api/patient/heatmap-feedback', { credentials: 'same-origin' });
+                if (res.status === 401) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                const feedback = await res.json();
+                const list = document.getElementById('pressureFeedbackList');
+                if (!feedback || feedback.length === 0) {
+                    list.innerHTML = '<p>No feedback submitted yet.</p>';
+                    return;
+                }
+
+                list.innerHTML = feedback.map(entry => `
+                    <div style="border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #f8f9fa;">
+                        <p><strong>Region:</strong> ${entry.region || 'Unspecified'}</p>
+                        <p><strong>Map Time:</strong> ${new Date(entry.map_timestamp).toLocaleString()}</p>
+                        <p>${entry.comment}</p>
+                        <p style="font-size: 0.85rem; color: #6c757d;">Submitted: ${new Date(entry.created_at).toLocaleString()}</p>
+                        ${entry.replies && entry.replies.length > 0 ? `<div style="margin-top: 10px; padding: 10px; border-radius: 8px; background: white;">
+                            <strong>Clinician replies:</strong>
+                            ${entry.replies.map(reply => `
+                                <div style="margin-top: 8px; padding: 10px; border: 1px solid #dee2e6; border-radius: 5px; background: #fff;">
+                                    <p>${reply.reply}</p>
+                                    <p style="font-size: 0.8rem; color: #6c757d;">${reply.clinician_name} · ${new Date(reply.created_at).toLocaleString()}</p>
+                                </div>
+                            `).join('')}
+                        </div>` : '<p style="font-size:0.9rem;color:#6c757d;">No clinician replies yet.</p>'}
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('Error loading pressure feedback:', err);
+                document.getElementById('pressureFeedbackList').innerHTML = '<p>Error loading feedback.</p>';
+            }
+        }
+
+        async function submitPressureFeedback() {
+            const region = document.getElementById('pressureRegion').value.trim();
+            const comment = document.getElementById('pressureComment').value.trim();
+            const mapTimestamp = document.getElementById('mapTimestampSelect').value || new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+            if (!comment) {
+                alert('Please enter a comment about the pressure map.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/patient/heatmap-feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ region, comment, map_timestamp: mapTimestamp }),
+                    credentials: 'same-origin'
+                });
+                const result = await res.json();
+                if (result.success) {
+                    document.getElementById('pressureRegion').value = '';
+                    document.getElementById('pressureComment').value = '';
+                    loadPressureFeedback();
+                    alert('Feedback submitted successfully.');
+                } else {
+                    alert(result.error || 'Unable to submit feedback.');
+                }
+            } catch (err) {
+                console.error('Error submitting feedback:', err);
+                alert('Error submitting feedback.');
+            }
+        }
+
+        function loadChat() {
+            fetch('/api/patient/chat', { credentials: 'same-origin' })
+            .then(res => {
+                if (res.status === 401) {
+                    window.location.href = '/login.html';
+                    throw new Error('Unauthorized');
+                }
+                if (!res.ok) {
+                    throw new Error('Failed to load chat');
+                }
+                return res.json();
+            })
+            .then(messages => {
+                displayMessages(messages);
+            })
+            .catch(err => {
+                console.error('Error loading chat:', err);
+                if (err.message !== 'Unauthorized') {
+                    const chatDiv = document.getElementById('chatMessages');
+                    chatDiv.innerHTML = '<p>Error loading chat messages</p>';
+                }
+            });
+        }
+
+        function displayMessages(messages) {
+            const chatDiv = document.getElementById('chatMessages');
+            if (messages.length === 0) {
+                chatDiv.innerHTML = '<p>No messages yet. Start a conversation with your doctor.</p>';
+                return;
+            }
+
+            chatDiv.innerHTML = messages.map(msg => `
+                <div class="message ${msg.sender_role}">
+                    <strong>${msg.sender_name}:</strong> ${msg.message}
+                    <br><small>${new Date(msg.timestamp).toLocaleString()}</small>
+                </div>
+            `).join('');
+
+            // Scroll to bottom
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('chatMessage');
+            const message = messageInput.value.trim();
+
+            if (!message) return;
+
+            fetch('/api/patient/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message }),
+                credentials: 'same-origin'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    messageInput.value = '';
+                    loadChat(); // Reload chat to show new message
+                }
+            })
+            .catch(err => {
+                console.error('Error sending message:', err);
+                alert('Error sending message');
+            });
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.display = 'none';
+            });
+
+            // Remove active class from sidebar links
+            document.querySelectorAll('.sidebar a').forEach(link => {
+                link.classList.remove('active');
+            });
+
+            // Show selected section
+            document.getElementById(sectionName + '-section').style.display = 'block';
+
+            // Add active class to clicked link
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

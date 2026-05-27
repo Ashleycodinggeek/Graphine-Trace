@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clinician Dashboard</title>
+
+<style>
+body{
+    margin:0;
+    font-family:'Segoe UI',sans-serif;
+    background:#f4f6f9;
+}
+
+header{
+    background:linear-gradient(90deg,#4e73df,#1cc88a);
+    color:white;
+    padding:15px;
+    font-size:20px;
+    font-weight:600;
+}
+
+.container{
+    display:flex;
+}
+
+/* SIDEBAR */
+.sidebar{
+    width:220px;
+    background:#6f42c1;
+    min-height:100vh;
+    padding:20px;
+    color:white;
+}
+
+.sidebar a{
+    display:block;
+    color:white;
+    text-decoration:none;
+    padding:10px 0;
+}
+
+/* MAIN */
+.main{
+    flex:1;
+    padding:20px;
+}
+
+/* BOXES */
+.graph-section{
+    display:grid;
+    grid-template-columns:2fr 1fr;
+    gap:20px;
+}
+
+.graph, .side-card{
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 3px 10px rgba(0,0,0,0.08);
+}
+
+/* PATIENT LIST */
+#patientList div{
+    background:#fff;
+    padding:10px;
+    margin:10px 0;
+    border-radius:8px;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<header>Clinician Dashboard</header>
+
+<div class="container">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h3>Menu</h3>
+    <a href="appointments.html">Appointments</a>
+    <a href="#" onclick="loadPatients()">Patients</a>
+    <a href="notes.html">Add Notes</a>
+    <a href="chat.html">Chat</a>
+    <a href="login.html">Logout</a>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+<div class="graph-section">
+
+<!-- VITALS -->
+<div class="graph">
+<h3>Patient Vitals</h3>
+
+<select id="patientSelect" onchange="updateVitals()">
+    <option value="harry">Harry Maguire</option>
+    <option value="brian">Brian Kipkurui</option>
+</select>
+
+<p>BP: <span id="bp">120/80</span></p>
+<p>HR: <span id="hr">72</span></p>
+<p>Temp: <span id="temp">36.7</span></p>
+
+</div>
+
+<!-- PATIENT LIST -->
+<div class="side-card">
+<h3>Patients</h3>
+<button onclick="loadPatients()">Load Patients</button>
+
+<div id="patientList"></div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+<script>
+
+// VITALS DATA
+const patientData = {
+    harry:{bp:"130/85",hr:"78",temp:"37.1"},
+    brian:{bp:"120/80",hr:"72",temp:"36.7"}
+};
+
+function updateVitals(){
+    let p = document.getElementById("patientSelect").value;
+    document.getElementById("bp").textContent = patientData[p].bp;
+    document.getElementById("hr").textContent = patientData[p].hr;
+    document.getElementById("temp").textContent = patientData[p].temp;
+}
+
+// LOAD PATIENTS FROM DATABASE
+function loadPatients(){
+    fetch('/patients')
+    .then(res => res.json())
+    .then(data => {
+
+        let output = "";
+
+        data.forEach(p => {
+            output += `
+            <div onclick="viewPatient(${p.id})">
+                <strong>${p.name}</strong><br>
+                ${p.condition_name}
+            </div>`;
+        });
+
+        document.getElementById("patientList").innerHTML = output;
+
+    })
+    .catch(err => {
+        console.log("Error loading patients:", err);
+    });
+}
+
+// VIEW PATIENT
+function viewPatient(id){
+    window.location.href = "patient.html?id=" + id;
+}
+
+</script>
+
+</body>
+</html>

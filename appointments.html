@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Appointments</title>
+
+<style>
+body{
+    font-family: 'Segoe UI', sans-serif;
+    background: #f4f6f9;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container{
+    background: white;
+    width: 550px;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+h2{
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 25px;
+}
+
+ul{
+    list-style: none;
+    padding: 0;
+}
+
+li{
+    background: #e9f1ff;
+    margin-bottom: 15px;
+    padding: 15px;
+    border-left: 6px solid #4e73df;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: 0.3s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+li:hover{
+    background: #d4e4ff;
+    transform: translateX(5px);
+}
+
+/* Due Badge */
+.due{
+    background: #e74a3b;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.upcoming{
+    background: #1cc88a;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+button{
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #4e73df, #224abe);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Appointments Schedule</h2>
+
+    <ul id="appointmentList">
+        <!-- Appointments will be loaded dynamically -->
+    </ul>
+
+    <button onclick="window.location.href='dashboard.html'">
+        Back to Dashboard
+    </button>
+</div>
+
+<script>
+window.onload = function() {
+    loadAppointments();
+};
+
+function loadAppointments() {
+    fetch('/appointments')
+    .then(res => res.json())
+    .then(appointments => {
+        displayAppointments(appointments);
+    })
+    .catch(err => console.error('Error loading appointments:', err));
+}
+
+function displayAppointments(appointments) {
+    const list = document.getElementById("appointmentList");
+    
+    if (appointments.length === 0) {
+        list.innerHTML = '<li>No appointments scheduled</li>';
+        return;
+    }
+    
+    // Sort by date (latest first)
+    appointments.sort((a, b) => {
+        const dateA = new Date(a.appointment_date);
+        const dateB = new Date(b.appointment_date);
+        return dateB - dateA; // latest first
+    });
+    
+    list.innerHTML = '';
+    
+    appointments.forEach(appointment => {
+        const li = document.createElement('li');
+        const appointmentDate = new Date(appointment.appointment_date);
+        const today = new Date();
+        
+        li.setAttribute('data-date', appointment.appointment_date);
+        li.innerHTML = `${appointment.appointment_time} - ${appointment.patient_name} (${appointmentDate.toLocaleDateString()})`;
+        
+        const badge = document.createElement("span");
+        if (appointmentDate < today) {
+            badge.textContent = "DUE";
+            badge.classList.add("due");
+        } else {
+            badge.textContent = "Upcoming";
+            badge.classList.add("upcoming");
+        }
+        
+        li.appendChild(badge);
+        list.appendChild(li);
+    });
+}
+</script>
+
+</body>
+</html>

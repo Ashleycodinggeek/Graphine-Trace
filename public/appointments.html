@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Appointments</title>
+
+<style>
+body{
+    font-family: 'Segoe UI', sans-serif;
+    background: #f4f6f9;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container{
+    background: white;
+    width: 550px;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+h2{
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 25px;
+}
+
+ul{
+    list-style: none;
+    padding: 0;
+}
+
+li{
+    background: #e9f1ff;
+    margin-bottom: 15px;
+    padding: 15px;
+    border-left: 6px solid #4e73df;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: 0.3s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+li:hover{
+    background: #d4e4ff;
+    transform: translateX(5px);
+}
+
+/* Due Badge */
+.due{
+    background: #e74a3b;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.upcoming{
+    background: #1cc88a;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+button{
+    width: 100%;
+    margin-top: 20px;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #4e73df, #224abe);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Appointments Schedule</h2>
+
+    <ul id="appointmentList">
+        <li data-date="2026-02-20">
+            09:00 - Harry Maguire (20 Feb 2026)
+        </li>
+
+        <li data-date="2026-03-01">
+            11:00 - Brian Kipkurui (1 Mar 2026)
+        </li>
+
+        <li data-date="2026-01-15">
+            13:30 - Amad Dialo (15 Jan 2026)
+        </li>
+
+        <li data-date="2026-03-10">
+            15:00 - Sylvia Songol (10 Mar 2026)
+        </li>
+    </ul>
+
+    <button onclick="window.location.href='dashboard.html'">
+        Back to Dashboard
+    </button>
+</div>
+
+<script>
+const today = new Date();
+const list = document.getElementById("appointmentList");
+const appointments = Array.from(list.querySelectorAll("li"));
+
+// Sort by date (latest first)
+appointments.sort((a, b) => {
+    const dateA = new Date(a.getAttribute("data-date"));
+    const dateB = new Date(b.getAttribute("data-date"));
+    return dateB - dateA; // latest first
+});
+
+// Clear existing list
+list.innerHTML = "";
+
+// Re-add sorted items with badges
+appointments.forEach(item => {
+
+    const appointmentDate = new Date(item.getAttribute("data-date"));
+    const badge = document.createElement("span");
+
+    if (appointmentDate < today) {
+        badge.textContent = "DUE";
+        badge.classList.add("due");
+    } else {
+        badge.textContent = "Upcoming";
+        badge.classList.add("upcoming");
+    }
+
+    item.appendChild(badge);
+    list.appendChild(item);
+});
+</script>
+
+</body>
+</html>

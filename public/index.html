@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graphine Trace - Healthcare Management System</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+body::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: moveBackground 20s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes moveBackground {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(50px, 50px); }
+}
+
+.container {
+    position: relative;
+    z-index: 1;
+    max-width: 1000px;
+    width: 100%;
+}
+
+.header {
+    text-align: center;
+    color: white;
+    margin-bottom: 60px;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.logo-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.logo-icon i {
+    color: white;
+    font-size: 40px;
+}
+
+h1 {
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    letter-spacing: -1px;
+}
+
+.subtitle {
+    font-size: 18px;
+    font-weight: 300;
+    opacity: 0.95;
+}
+
+.login-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.login-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 40px 30px;
+    text-align: center;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.login-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.card-icon {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: white;
+}
+
+.admin-icon {
+    background: linear-gradient(135deg, #1e3c72 0%, #7e22ce 100%);
+}
+
+.clinician-icon {
+    background: linear-gradient(135deg, #0f766e 0%, #06b6d4 100%);
+}
+
+.patient-icon {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+}
+
+.card-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.card-description {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.card-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+.login-card:hover .card-button {
+    transform: scale(1.05);
+}
+
+.card-button:active {
+    transform: scale(0.98);
+}
+
+.admin-card:hover .card-button {
+    background: linear-gradient(135deg, #1e3c72 0%, #7e22ce 100%);
+}
+
+.clinician-card:hover .card-button {
+    background: linear-gradient(135deg, #0f766e 0%, #06b6d4 100%);
+}
+
+.patient-card:hover .card-button {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+}
+
+.features {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 30px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    margin-top: 40px;
+}
+
+.features h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.feature-item {
+    text-align: center;
+}
+
+.feature-item i {
+    font-size: 28px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.feature-item p {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    h1 {
+        font-size: 36px;
+    }
+
+    .subtitle {
+        font-size: 16px;
+    }
+
+    .login-options {
+        grid-template-columns: 1fr;
+    }
+
+    .logo-icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    .logo-icon i {
+        font-size: 30px;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="logo-container">
+            <div class="logo-icon">
+                <i class="fas fa-heartbeat"></i>
+            </div>
+        </div>
+        <h1>Graphine Trace</h1>
+        <p class="subtitle">Healthcare Management System</p>
+    </div>
+
+    <div class="login-options">
+        <!-- Admin Login -->
+        <a href="/admin-login.html" class="login-card admin-card" style="text-decoration: none; color: inherit;">
+            <div class="card-icon admin-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3 class="card-title">Administrator</h3>
+            <p class="card-description">System administration, user management, and oversight</p>
+            <button class="card-button">Admin Login</button>
+        </a>
+
+        <!-- Clinician Login -->
+        <a href="/clinician-login.html" class="login-card clinician-card" style="text-decoration: none; color: inherit;">
+            <div class="card-icon clinician-icon">
+                <i class="fas fa-stethoscope"></i>
+            </div>
+            <h3 class="card-title">Clinician</h3>
+            <p class="card-description">Patient management, medical notes, and treatment plans</p>
+            <button class="card-button">Clinician Login</button>
+        </a>
+
+        <!-- Patient Login -->
+        <a href="/patient-login.html" class="login-card patient-card" style="text-decoration: none; color: inherit;">
+            <div class="card-icon patient-icon">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <h3 class="card-title">Patient</h3>
+            <p class="card-description">View health records, appointments, and communicate with doctors</p>
+            <button class="card-button">Patient Login</button>
+        </a>
+    </div>
+
+    <div class="features">
+        <h2>System Features</h2>
+        <div class="features-grid">
+            <div class="feature-item">
+                <i class="fas fa-lock"></i>
+                <p>Secure Authentication</p>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-database"></i>
+                <p>Patient Records</p>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-calendar"></i>
+                <p>Appointments</p>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-comments"></i>
+                <p>Chat System</p>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-heartbeat"></i>
+                <p>Vital Signs</p>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-file-medical"></i>
+                <p>Medical Notes</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

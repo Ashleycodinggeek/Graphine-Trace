@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat</title>
+</head>
+<body>
+
+<h2>Clinician Chat</h2>
+
+<input type="text" id="msg" placeholder="Type message">
+<button onclick="send()">Send</button>
+
+<div id="chatBox"></div>
+
+<script>
+function send(){
+    let msg = document.getElementById("msg").value;
+    document.getElementById("chatBox").innerHTML += "<p>" + msg + "</p>";
+}
+</script>
+
+</body>
+</html>

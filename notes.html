@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Add Notes</title>
+
+<style>
+body{
+    font-family: 'Segoe UI', sans-serif;
+    background: #f4f6f9;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Main Card */
+.container{
+    width: 600px;
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+/* Heading */
+h2{
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 25px;
+}
+
+/* Form Elements */
+label{
+    font-weight: 600;
+    color: #34495e;
+    font-size: 14px;
+}
+
+select,
+input,
+textarea{
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+select:focus,
+input:focus,
+textarea:focus{
+    border-color: #4e73df;
+    outline: none;
+    box-shadow: 0 0 5px rgba(78,115,223,0.3);
+}
+
+/* Buttons */
+.button-group{
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.save-btn{
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #1cc88a, #17a673);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.save-btn:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+}
+
+.back-btn{
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: #858796;
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.back-btn:hover{
+    background: #6c757d;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Add Clinical Notes</h2>
+
+<label>Select Patient</label>
+<select id="patientSelect">
+    <option value="">Select Patient</option>
+    <!-- Patients will be loaded dynamically -->
+</select>
+
+<br>
+
+<label>Diagnosis</label>
+<input type="text" id="diagnosis" placeholder="Enter Diagnosis">
+
+<br>
+
+<label>Prescription</label>
+<input type="text" id="prescription" placeholder="Enter Prescription">
+
+<br>
+
+<label>Comments</label>
+<textarea id="comments" rows="4" placeholder="Enter Comments"></textarea>
+
+<div class="button-group">
+    <button class="save-btn" onclick="saveNotes()">
+        Save Notes
+    </button>
+
+    <button class="back-btn" onclick="window.location.href='dashboard.html'">
+        Back to Dashboard
+    </button>
+</div>
+
+</div>
+
+<script>
+let patients = [];
+
+window.onload = function() {
+    loadPatients();
+    
+    // Check if patient is specified in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const patientId = urlParams.get('patient');
+    if (patientId) {
+        document.getElementById('patientSelect').value = patientId;
+    }
+};
+
+function loadPatients() {
+    fetch('/patients')
+    .then(res => res.json())
+    .then(data => {
+        patients = data;
+        const select = document.getElementById('patientSelect');
+        
+        data.forEach(patient => {
+            const option = document.createElement('option');
+            option.value = patient.id;
+            option.textContent = patient.name;
+            select.appendChild(option);
+        });
+    })
+    .catch(err => console.error('Error loading patients:', err));
+}
+
+function saveNotes() {
+    const patientId = document.getElementById('patientSelect').value;
+    const diagnosis = document.getElementById('diagnosis').value;
+    const prescription = document.getElementById('prescription').value;
+    const comments = document.getElementById('comments').value;
+    
+    if (!patientId) {
+        alert('Please select a patient');
+        return;
+    }
+    
+    if (!diagnosis && !prescription && !comments) {
+        alert('Please enter at least one field');
+        return;
+    }
+    
+    const noteData = {
+        patient_id: patientId,
+        diagnosis: diagnosis,
+        prescription: prescription,
+        comments: comments
+    };
+    
+    fetch('/notes', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(noteData)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('Notes saved successfully!');
+            // Clear form
+            document.getElementById('diagnosis').value = '';
+            document.getElementById('prescription').value = '';
+            document.getElementById('comments').value = '';
+        } else {
+            alert('Error saving notes');
+        }
+    })
+    .catch(err => {
+        console.error('Error saving notes:', err);
+        alert('Error saving notes');
+    });
+}
+</script>
+
+</body>
+</html>
