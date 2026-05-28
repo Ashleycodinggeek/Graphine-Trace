@@ -268,12 +268,12 @@ if (urlParams.get('error')) {
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // 1. Get the values directly from the input fields
+    // 1. Code to Get the values directly from the input fields
     const usernameVal = document.getElementById('username').value;
     const passwordVal = document.getElementById('password').value;
     
     try {
-        // 2. Send data using clean JSON formatting
+        // 2. Code to Send data using clean JSON formatting
         const response = await fetch('/api/clinician-login', {
             method: 'POST',
             headers: {
